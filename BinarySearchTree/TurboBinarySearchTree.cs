@@ -1,14 +1,16 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 
-public class TurboBinarySearchTree<T> where T : IComparable<T>
+public class TurboBinarySearchTree<T> : IEnumerable where T : IComparable<T>
 {
-    private class TreeNode
+    private class Node
     {
         public T Value;
-        public TreeNode Left;
-        public TreeNode Right;
+        public Node Left;
+        public Node Right;
 
-        public TreeNode(T value)
+        public Node(T value)
         {
             Value = value;
             Left = null;
@@ -16,7 +18,7 @@ public class TurboBinarySearchTree<T> where T : IComparable<T>
         }
     }
 
-    private TreeNode root;
+    private Node root;
 
     public TurboBinarySearchTree()
     {
@@ -28,27 +30,17 @@ public class TurboBinarySearchTree<T> where T : IComparable<T>
         root = Insert(root, value);
     }
 
-    private TreeNode Insert(TreeNode node, T value)
+    private Node Insert(Node node, T value)
     {
         if (node == null)
-        {
-            return new TreeNode(value);
-        }
+            return new Node(value);
 
-        int comparison = value.CompareTo(node.Value);
-        if (comparison < 0)
-        {
+        int compare = value.CompareTo(node.Value);
+
+        if (compare < 0)
             node.Left = Insert(node.Left, value);
-        }
-        else if (comparison > 0)
-        {
+        else if (compare > 0)
             node.Right = Insert(node.Right, value);
-        }
-        else
-        {
-            // Value already exists, handle duplicate as needed
-        }
-
         return node;
     }
 
@@ -57,81 +49,63 @@ public class TurboBinarySearchTree<T> where T : IComparable<T>
         return Search(root, value) != null;
     }
 
-    private TreeNode Search(TreeNode node, T value)
+    private Node Search(Node node, T value)
     {
         if (node == null)
-        {
             return null;
-        }
 
-        int comparison = value.CompareTo(node.Value);
-        if (comparison < 0)
-        {
+        int compare = value.CompareTo(node.Value);
+
+        if (compare < 0)
             return Search(node.Left, value);
-        }
-        else if (comparison > 0)
-        {
+        else if (compare > 0)
             return Search(node.Right, value);
-        }
         else
-        {
             return node;
-        }
     }
 
     public bool Delete(T value)
     {
-        bool found = Search(value);
-        if (found)
-        {
-            root = Delete(root, value);
-        }
+        bool found;
+        (root, found) = Delete(root, value);
         return found;
     }
 
-    private TreeNode Delete(TreeNode node, T value)
+    private (Node, bool) Delete(Node node, T value)
     {
         if (node == null)
-        {
-            return null;
-        }
+            return (null, false);
 
-        int comparison = value.CompareTo(node.Value);
-        if (comparison < 0)
+        int compare = value.CompareTo(node.Value);
+
+        if (compare < 0)
         {
-            node.Left = Delete(node.Left, value);
+            (node.Left, var found) = Delete(node.Left, value);
+            return (node, found);
         }
-        else if (comparison > 0)
+        else if (compare > 0)
         {
-            node.Right = Delete(node.Right, value);
+            (node.Right, var found) = Delete(node.Right, value);
+            return (node, found);
         }
         else
         {
             if (node.Left == null)
-            {
-                return node.Right;
-            }
+                return (node.Right, true);
             else if (node.Right == null)
-            {
-                return node.Left;
-            }
-            else
-            {
-                TreeNode minRight = GetMin(node.Right);
-                node.Value = minRight.Value;
-                node.Right = Delete(node.Right, minRight.Value);
-            }
-        }
+                return (node.Left, true);
 
-        return node;
+            Node minNode = FindMin(node.Right);
+            node.Value = minNode.Value;
+            (node.Right, _) = Delete(node.Right, minNode.Value);
+            return (node, true);
+        }
     }
 
-    private TreeNode GetMin(TreeNode node)
+    private Node FindMin(Node node)
     {
         while (node.Left != null)
-        {
             node = node.Left;
-        }
         return node;
     }
 
@@ -140,21 +114,17 @@ public class TurboBinarySearchTree<T> where T : IComparable<T>
         return InOrderTraversal(root).GetEnumerator();
     }
 
-    private IEnumerable<T> InOrderTraversal(TreeNode node)
+    private IEnumerable<T> InOrderTraversal(Node node)
     {
         if (node != null)
         {
             foreach (var value in InOrderTraversal(node.Left))
-            {
                 yield return value;
-            }
 
             yield return node.Value;
 
             foreach (var value in InOrderTraversal(node.Right))
-            {
                 yield return value;
-            }
         }
     }
 
